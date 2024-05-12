@@ -1,0 +1,72 @@
+pip install chembl_webresource_client
+
+importing the libraries
+
+import pandas as pd
+from chembl_webresource_client.new_client import new_client
+
+search for tarhet protein
+
+target search for coronavirus
+
+target = new_client.target
+target_query = target.search('coronavirus')
+targets = pd.DataFrame.from_dict(target_query)
+targets
+
+here we will select a bioactivity data of sarc coronavirus for 3c protease
+
+selected_target = targets.target_chembl_id[6]
+selected_target
+
+retrive only bioativity data
+
+activity = new_client.activity
+res = activity.filter(target_chembl_id=selected_target).filter(standard_type="IC50")
+
+
+
+
+df = pd.DataFrame.from_dict(res)
+df.head(3)
+
+df.standard_type.unique()
+
+this flter compounds are the bioactivity data. we will download it for further step.
+
+df.to_csv('bioactivity_data.csv', index=False)
+
+copying files to doogle drive
+
+handeling missing data like missing value for standard_value
+
+df2 = df[df.standard_value.notna()]
+df2
+
+data preprocessing of the bioactivity data
+
+bioactivity_class = []
+for i in df2.standard_value:
+  if float(i) >= 1000:
+    bioactivity_class.append("inactive")
+  elif float(i) <= 1000:
+      bioactivity_class.append("active")
+      #else:
+      #bioactivity_class.append("intermediate")
+
+combine the 3 cholum for the convineance of the observer
+
+selection = ['molecule_chembl_id', 'canonical_smiles', 'standard_value']
+df3 = df2[selection]
+df3
+
+ creating a bioactivity class
+
+bioactivity_class = pd.Series(bioactivity_class, name='bioactivity_class')
+df4 = pd.concat([df3, bioactivity_class], axis=1)
+
+df4
+
+save dataframe to csv file
+
+df4.to_csv('bioactivity_data_processsed.csv', index=False)
